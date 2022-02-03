@@ -1,0 +1,4 @@
+spring:
+  kafka:
+    bootstrap-servers:
+      - "10.0.0.20:9092"

@@ -1,0 +1,168 @@
+version: '3.9'
+services:
+  ######################
+  # ZOOKEEPER + KAFKA  #
+  ######################
+  zookeper:
+    image: docker.io/bitnami/zookeeper:3.7
+    container_name: zookeeper
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+    volumes:
+      - "zookeeper_data:/bitnami"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      net:
+        ipv4_address: 10.0.0.10
+  kafka:
+    image: docker.io/bitnami/kafka:3
+    ports:
+      - "9092:9092"
+    volumes:
+      - "kafka_data:/bitnami"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://10.0.0.20:9092
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeper
+    restart: on-failure
+    networks:
+      net:
+        ipv4_address: 10.0.0.20
+
+  ###################
+  # DATA GENERATOR  #
+  ###################
+  data-generator:
+    image: data-generator:latest
+    container_name: datagenerator
+    hostname: datagenerator
+    ports:
+      - "4444:8080"
+    depends_on:
+      - kafka
+    networks:
+      net:
+        ipv4_address: 10.0.0.25
+
+  #########
+  # FLINK #
+  #########
+  flink-jobmanager:
+    image: flink:1.13.5
+    hostname: jobmanager
+    ports:
+      - "8877:8081"
+      - "6123:6123"
+    command: jobmanager
+    #command: standalone-job --job-classname com.job.ClassName [--job-id <job id>] [--fromSavepoint /path/to/savepoint [--allowNonRestoredState]] [job arguments]
+    #volumes:
+    #  - /host/path/to/job/artifacts:/opt/flink/usrlib
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=10.0.0.30
+      #- |
+      #  FLINK_PROPERTIES=
+      #  jobmanager.rpc.address: jobmanager
+      #  parallelism.default: 2
+    networks:
+      net:
+        ipv4_address: 10.0.0.30
+
+  flink-taskmanager:
+    image: flink:1.13.5
+    depends_on:
+      - flink-jobmanager
+    command: taskmanager
+    #volumes:
+      #  - /host/path/to/job/artifacts:/opt/flink/usrlib
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=10.0.0.30
+      #- |
+      #  FLINK_PROPERTIES=
+      #  jobmanager.rpc.address: jobmanager
+      #  taskmanager.numberOfTaskSlots: 2
+      #  parallelism.default: 2
+    networks:
+      net:
+        ipv4_address: 10.0.0.31
+
+  ##############
+  # POSTGRESQL #
+  ##############
+  postgresql:
+    image: postgres:14
+    container_name: postgresql
+    hostname: postgresql
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_DB=test_db
+    networks:
+      net:
+        ipv4_address: 10.0.0.50
+  db:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    ports:
+      - "6678:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: testapp
+    networks:
+      net:
+        ipv4_address: 10.0.0.52
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8811:8080"
+    networks:
+      net:
+        ipv4_address: 10.0.0.51
+
+
+  ###########
+  # GRAFANA #
+  ###########
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    hostname: grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
+    depends_on:
+      - postgresql
+      - kafka
+    networks:
+      net:
+        ipv4_address: 10.0.0.60
+
+############
+# Networks #
+############
+networks:
+  net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24
+
+############
+# Volumes  #
+############
+volumes:
+  zookeeper_data:
+    driver: local
+  kafka_data:
+    driver: local
