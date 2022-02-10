@@ -107,6 +107,9 @@ services:
     networks:
       net:
         ipv4_address: 10.0.0.50
+  #########
+  # MYSQL #
+  #########
   db:
     image: mysql
     command: --default-authentication-plugin=mysql_native_password
