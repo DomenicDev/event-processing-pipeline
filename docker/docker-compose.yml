@@ -91,22 +91,28 @@ services:
       net:
         ipv4_address: 10.0.0.31
 
-  ##############
-  # POSTGRESQL #
-  ##############
-  postgresql:
-    image: postgres:14
-    container_name: postgresql
-    hostname: postgresql
-    restart: always
+
+  ##########
+  # INFLUX #
+  ##########
+  influxdb:
+    image: influxdb:2.1.1
     ports:
-      - "5432:5432"
+      - "8086:8086"
+    volumes:
+      - "./influx:/docker-entrypoint-initdb.d"
     environment:
-      - POSTGRES_HOST_AUTH_METHOD=trust
-      - POSTGRES_DB=test_db
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=admin123
+      - DOCKER_INFLUXDB_INIT_ORG=ep
+      - DOCKER_INFLUXDB_INIT_BUCKET=weather
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=GQjCO1YRjF1fcL4YfCp9
     networks:
       net:
-        ipv4_address: 10.0.0.50
+        ipv4_address: 10.0.0.55
+
+
   #########
   # MYSQL #
   #########
@@ -145,7 +151,6 @@ services:
     environment:
       - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
     depends_on:
-      - postgresql
       - kafka
     networks:
       net:

@@ -1,8 +1,11 @@
 package de.hfu.ep;
 
+import com.influxdb.client.InfluxDBClient;
+import com.influxdb.client.InfluxDBClientFactory;
+import com.influxdb.client.domain.WritePrecision;
+import com.influxdb.client.write.Point;
 import org.apache.beam.runners.flink.FlinkRunner;
 import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.io.kafka.KafkaIO;
 import org.apache.beam.sdk.io.kafka.KafkaRecord;
 import org.apache.beam.sdk.options.PipelineOptions;
@@ -16,7 +19,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.joda.time.Duration;
 
 import java.io.Serializable;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 public class WeatherBeamPipeline {
@@ -88,8 +91,35 @@ public class WeatherBeamPipeline {
     public static class Accum implements Serializable {
         double sumTemperature = 0;
         double sumHumidity = 0;
-        double  sumPressure = 0;
+        double sumPressure = 0;
         int count = 0;
+    }
+
+    public static class InfluxDBWrite extends DoFn<WeatherRecord, WeatherRecord> {
+
+        private static String token = "GQjCO1YRjF1fcL4YfCp9";
+        private static String bucket = "weather";
+        private static String org = "ep";
+
+        private static InfluxDBClient client = InfluxDBClientFactory.create("http://10.0.0.55:8086", token.toCharArray());
+
+
+        @ProcessElement
+        public void processElement(@Element WeatherRecord input, OutputReceiver<WeatherRecord> receiver) {
+
+            Point dataPoint = Point
+                    .measurement("Furtwangen")
+                    .addTag("location", "Furtwangen")
+                    .addField("temperature", input.getTemperature())
+                    .addField("humidity", input.getHumidity())
+                    .addField("pressure", input.getPressure())
+                    .time(Instant.now(), WritePrecision.S);
+
+            client.getWriteApi().writePoint(bucket, org, dataPoint);
+
+            receiver.output(input);
+        }
+
     }
 
 
@@ -107,7 +137,9 @@ public class WeatherBeamPipeline {
                 .apply("ConvertToPojo", ParDo.of(new ConvertToPojo()))
                 .apply(Window.<WeatherRecord>into(FixedWindows.of(Duration.standardSeconds(5))))
                 .apply(Combine.globally(new AverageWeatherRecordFn()).withoutDefaults())
-                .apply(JdbcIO.<WeatherRecord>write()
+                .apply(ParDo.of(new InfluxDBWrite()));
+    /*.apply(
+                        JdbcIO.<WeatherRecord>write()
                         .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration.create(
                                 "com.mysql.jdbc.Driver", "jdbc:mysql://10.0.0.52/testapp")
                                 .withUsername("root")
@@ -121,8 +153,9 @@ public class WeatherBeamPipeline {
                                     preparedStatement.setDouble(2, element.getHumidity());
                                     preparedStatement.setDouble(3, element.getPressure());
                                     preparedStatement.setTimestamp(4, Timestamp.valueOf(LocalDateTime.parse(element.getTimestamp())));
-                                    System.out.println("setting... " + element);
                                 }));
+
+                 */
         pipeline.run().waitUntilFinish();
     }
 
