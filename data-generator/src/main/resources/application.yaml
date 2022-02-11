@@ -1,3 +1,4 @@
+weather-token: 5788588e021da4b2bde50a7631eaf3f9
 spring:
   kafka:
     bootstrap-servers:

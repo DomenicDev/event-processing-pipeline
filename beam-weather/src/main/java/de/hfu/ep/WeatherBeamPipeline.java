@@ -97,11 +97,11 @@ public class WeatherBeamPipeline {
 
     public static class InfluxDBWrite extends DoFn<WeatherRecord, WeatherRecord> {
 
-        private static String token = "GQjCO1YRjF1fcL4YfCp9";
-        private static String bucket = "weather";
-        private static String org = "ep";
+        private static final String TOKEN = "GQjCO1YRjF1fcL4YfCp9";
+        private static final String BUCKET = "weather";
+        private static final String ORG = "ep";
 
-        private static InfluxDBClient client = InfluxDBClientFactory.create("http://10.0.0.55:8086", token.toCharArray());
+        private static final InfluxDBClient client = InfluxDBClientFactory.create("http://10.0.0.55:8086", TOKEN.toCharArray());
 
 
         @ProcessElement
@@ -115,7 +115,7 @@ public class WeatherBeamPipeline {
                     .addField("pressure", input.getPressure())
                     .time(Instant.now(), WritePrecision.S);
 
-            client.getWriteApi().writePoint(bucket, org, dataPoint);
+            client.getWriteApi().writePoint(BUCKET, ORG, dataPoint);
 
             receiver.output(input);
         }
@@ -135,27 +135,9 @@ public class WeatherBeamPipeline {
                         .withBootstrapServers("10.0.0.20:9092")
                         .withTopic("weather"))
                 .apply("ConvertToPojo", ParDo.of(new ConvertToPojo()))
-                .apply(Window.<WeatherRecord>into(FixedWindows.of(Duration.standardSeconds(5))))
+                .apply(Window.into(FixedWindows.of(Duration.standardSeconds(5))))
                 .apply(Combine.globally(new AverageWeatherRecordFn()).withoutDefaults())
                 .apply(ParDo.of(new InfluxDBWrite()));
-    /*.apply(
-                        JdbcIO.<WeatherRecord>write()
-                        .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration.create(
-                                "com.mysql.jdbc.Driver", "jdbc:mysql://10.0.0.52/testapp")
-                                .withUsername("root")
-                                .withPassword("example")
-                        )
-                        .withStatement("INSERT INTO `weather` (`temperature`, `humidity`, `pressure`, `created_time`) " +
-                                "VALUES (?, ?, ?, ?)")
-                        .withPreparedStatementSetter(
-                                (JdbcIO.PreparedStatementSetter<WeatherRecord>) (element, preparedStatement) -> {
-                                    preparedStatement.setDouble(1, element.getTemperature());
-                                    preparedStatement.setDouble(2, element.getHumidity());
-                                    preparedStatement.setDouble(3, element.getPressure());
-                                    preparedStatement.setTimestamp(4, Timestamp.valueOf(LocalDateTime.parse(element.getTimestamp())));
-                                }));
-
-                 */
         pipeline.run().waitUntilFinish();
     }
 
