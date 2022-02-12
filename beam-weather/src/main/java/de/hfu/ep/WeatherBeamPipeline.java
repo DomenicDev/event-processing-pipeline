@@ -115,7 +115,7 @@ public class WeatherBeamPipeline {
                     .addField("pressure", input.getPressure())
                     .time(Instant.now(), WritePrecision.S);
 
-            client.getWriteApi().writePoint(BUCKET, ORG, dataPoint);
+            client.getWriteApiBlocking().writePoint(BUCKET, ORG, dataPoint);
 
             receiver.output(input);
         }

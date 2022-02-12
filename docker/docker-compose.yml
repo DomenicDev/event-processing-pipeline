@@ -50,6 +50,17 @@ services:
       net:
         ipv4_address: 10.0.0.25
 
+  data-generator-finance:
+    image: data-generator-finance:latest
+    environment:
+      - TOKEN=nyswkg.4qrqaA:qjf0cTzhUzXVg6Zsc-uYdFD10UNvV3EKCrQja9GFLo4
+    depends_on:
+      - kafka
+    networks:
+      net:
+        ipv4_address: 10.0.0.26
+
+
   #########
   # FLINK #
   #########

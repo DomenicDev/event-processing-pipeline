@@ -3,9 +3,12 @@ package de.hfu.ep.datagenerator;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.util.concurrent.ListenableFutureCallback;
+import org.springframework.util.concurrent.SuccessCallback;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDateTime;
@@ -63,7 +66,17 @@ public class OpenWeatherDataProducer {
     }
 
     private void sendMessage(String messageData) {
-        template.send("weather", "furtwangen", messageData);
+        template.send("weather", "furtwangen", messageData).addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
+            @Override
+            public void onFailure(Throwable ex) {
+                System.out.println("failure..." + ex);
+            }
+
+            @Override
+            public void onSuccess(SendResult<String, String> result) {
+                System.out.println("Success: " + result.getProducerRecord().value());
+            }
+        });
     }
 
 }
