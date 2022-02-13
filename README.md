@@ -1,4 +1,4 @@
-# Pipeline for Visualization of Streaming Data
+# Seminararbeit zum Thema Visualisierung von Datenströmen 
 
 Diese Arbeit entstand als Seminararbeit im Rahmen der Veranstaltung Event Processing der Hochschule Furtwangen. 
 
