@@ -8,7 +8,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFutureCallback;
-import org.springframework.util.concurrent.SuccessCallback;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDateTime;
@@ -24,13 +23,13 @@ public class OpenWeatherDataProducer {
 
     public OpenWeatherDataProducer(KafkaTemplate<String, String> template,
                                    WebClient.Builder builder,
-                                   @Value("${weather-token}") String token) {
+                                   @Value("${token}") String token) {
         this.template = template;
         this.webClient = builder.baseUrl("https://api.openweathermap.org/data/2.5/weather").build();
         this.token = token;
     }
 
-    @Scheduled(initialDelay = 3000, fixedDelay = 2000)
+    @Scheduled(initialDelay = 5000, fixedDelay = 60000)
     public void receiveWeatherData() {
         // read data
         String currentData = readCurrentWeatherData();
@@ -62,7 +61,7 @@ public class OpenWeatherDataProducer {
     }
 
     private String createMessage(double temperature, double pressure, double humidity) {
-        return String.format("%s|%s|%s|%s|%s", "sensor1", temperature, humidity, pressure, LocalDateTime.now());
+        return String.format("%s|%s|%s|%s", temperature, humidity, pressure, LocalDateTime.now());
     }
 
     private void sendMessage(String messageData) {

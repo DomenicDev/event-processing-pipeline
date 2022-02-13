@@ -13,10 +13,7 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Combine;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
-import org.apache.beam.sdk.transforms.windowing.FixedWindows;
-import org.apache.beam.sdk.transforms.windowing.Window;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.joda.time.Duration;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -35,10 +32,10 @@ public class WeatherBeamPipeline {
             }
             String[] values = message.split("\\|");
             WeatherRecord weatherRecord = new WeatherRecord(
+                    Double.parseDouble(values[0]),
                     Double.parseDouble(values[1]),
                     Double.parseDouble(values[2]),
-                    Double.parseDouble(values[3]),
-                    values[4]);
+                    values[3]);
             outputReceiver.output(weatherRecord);
         }
 
@@ -135,8 +132,8 @@ public class WeatherBeamPipeline {
                         .withBootstrapServers("10.0.0.20:9092")
                         .withTopic("weather"))
                 .apply("ConvertToPojo", ParDo.of(new ConvertToPojo()))
-                .apply(Window.into(FixedWindows.of(Duration.standardSeconds(5))))
-                .apply(Combine.globally(new AverageWeatherRecordFn()).withoutDefaults())
+                //.apply(Window.into(FixedWindows.of(Duration.standardSeconds(5))))
+                //.apply(Combine.globally(new AverageWeatherRecordFn()).withoutDefaults())
                 .apply(ParDo.of(new InfluxDBWrite()));
         pipeline.run().waitUntilFinish();
     }

@@ -35,15 +35,15 @@ services:
       net:
         ipv4_address: 10.0.0.20
 
-  ###################
-  # DATA GENERATOR  #
-  ###################
-  data-generator:
-    image: data-generator:latest
-    container_name: datagenerator
-    hostname: datagenerator
-    ports:
-      - "4444:8080"
+  ####################
+  # DATA GENERATORS  #
+  ####################
+  data-generator-weather:
+    image: data-generator-weather:latest
+    container_name: datagenerator-weather
+    hostname: datagenerator-weather
+    environment:
+      - TOKEN=5788588e021da4b2bde50a7631eaf3f9
     depends_on:
       - kafka
     networks:
@@ -71,15 +71,8 @@ services:
       - "8877:8081"
       - "6123:6123"
     command: jobmanager
-    #command: standalone-job --job-classname com.job.ClassName [--job-id <job id>] [--fromSavepoint /path/to/savepoint [--allowNonRestoredState]] [job arguments]
-    #volumes:
-    #  - /host/path/to/job/artifacts:/opt/flink/usrlib
     environment:
       - JOB_MANAGER_RPC_ADDRESS=10.0.0.30
-      #- |
-      #  FLINK_PROPERTIES=
-      #  jobmanager.rpc.address: jobmanager
-      #  parallelism.default: 2
     networks:
       net:
         ipv4_address: 10.0.0.30
@@ -89,15 +82,8 @@ services:
     depends_on:
       - flink-jobmanager
     command: taskmanager
-    #volumes:
-      #  - /host/path/to/job/artifacts:/opt/flink/usrlib
     environment:
       - JOB_MANAGER_RPC_ADDRESS=10.0.0.30
-      #- |
-      #  FLINK_PROPERTIES=
-      #  jobmanager.rpc.address: jobmanager
-      #  taskmanager.numberOfTaskSlots: 2
-      #  parallelism.default: 2
     networks:
       net:
         ipv4_address: 10.0.0.31
@@ -122,32 +108,6 @@ services:
     networks:
       net:
         ipv4_address: 10.0.0.55
-
-
-  #########
-  # MYSQL #
-  #########
-  db:
-    image: mysql
-    command: --default-authentication-plugin=mysql_native_password
-    restart: always
-    ports:
-      - "6678:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: example
-      MYSQL_DATABASE: testapp
-    networks:
-      net:
-        ipv4_address: 10.0.0.52
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - "8811:8080"
-    networks:
-      net:
-        ipv4_address: 10.0.0.51
-
 
   ###########
   # GRAFANA #
