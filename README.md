@@ -1,6 +1,6 @@
 # Seminararbeit zum Thema Visualisierung von Datenströmen 
 
-Diese Arbeit entstand als Seminararbeit im Rahmen der Veranstaltung Event Processing der Hochschule Furtwangen. 
+Diese Arbeit entstand als Seminararbeit im Rahmen der Veranstaltung Event Processing an der Hochschule Furtwangen. 
 
 ## Kursverlauf der Kryptowährungen Bitcoin und Ethereum
 ![](crypto.PNG)
