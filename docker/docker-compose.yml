@@ -43,7 +43,7 @@ services:
     container_name: datagenerator-weather
     hostname: datagenerator-weather
     environment:
-      - TOKEN=5788588e021da4b2bde50a7631eaf3f9
+      - TOKEN=<INSERT_OPEN_WEATHER_MAP_TOKEN_HERE>
     depends_on:
       - kafka
     networks:
@@ -53,7 +53,7 @@ services:
   data-generator-finance:
     image: data-generator-finance:latest
     environment:
-      - TOKEN=nyswkg.4qrqaA:qjf0cTzhUzXVg6Zsc-uYdFD10UNvV3EKCrQja9GFLo4
+      - TOKEN=<INSERT_ABLY_TOKEN_HERE>
     depends_on:
       - kafka
     networks:
